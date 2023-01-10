@@ -8,23 +8,46 @@ resource "aws_vpc" "pri_vpc" {
   }
 }
 
-resource "aws_subnet" "subnet1" {
+resource "aws_subnet" "subpub1" {
   vpc_id     = aws_vpc.pri_vpc.id
   cidr_block = "10.1.1.0/24"
+  map_public_ip_on_launch = true
 
   tags = {
-    Name = "sub1"
+    Name = "pub1"
   }
 }
 
-resource "aws_subnet" "subnet2" {
+resource "aws_subnet" "subpub2" {
   vpc_id     = aws_vpc.pri_vpc.id
   cidr_block = "10.1.2.0/24"
+  map_public_ip_on_launch = true
 
   tags = {
-    Name = "sub2"
+    Name = "pub2"
   }
 }
+
+resource "aws_subnet" "subpriv1" {
+  vpc_id     = aws_vpc.pri_vpc.id
+  cidr_block = "10.1.3.0/24"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "priv1"
+  }
+}
+
+resource "aws_subnet" "subpriv2" {
+  vpc_id     = aws_vpc.pri_vpc.id
+  cidr_block = "10.1.4.0/24"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "priv2"
+  }
+}
+
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.pri_vpc.id
 
@@ -32,6 +55,7 @@ resource "aws_internet_gateway" "gw" {
     Name = "gw"
   }
 }
+
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.pri_vpc.id
 
