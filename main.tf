@@ -69,12 +69,12 @@ resource "aws_route_table" "rt" {
 }
 
 resource "aws_route_table_association" "as1" {
-  subnet_id      = aws_subnet.subnet1.id
+  subnet_id      = aws_subnet.subpriv1.id
   route_table_id = aws_route_table.rt.id
 }
 
 resource "aws_route_table_association" "as2" {
-  subnet_id      = aws_subnet.subnet2.id
+  subnet_id      = aws_subnet.subpriv2.id
   route_table_id = aws_route_table.rt.id
 }
 
@@ -102,17 +102,34 @@ resource "aws_key_pair" "key" {
   public_key = file("/home/ubuntu/.ssh/mykey.pub")
 }
 
-resource "aws_instance" "web" {
+resource "aws_instance" "web1" {
   instance_type = "t2.micro"
   ami           = "ami-0ff39345bd62c82a5"
   key_name = aws_key_pair.key.id
-  subnet_id = aws_subnet.subnet1.id
+  subnet_id = aws_subnet.subpriv1.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
   associate_public_ip_address = true
 
   tags = {
-    Name = "nginx"
+    Name = "nginx1"
+  }
+  
+  root_block_device {
+    volume_size= 10
+  }
+}
+resource "aws_instance" "web2" {
+  instance_type = "t2.micro"
+  ami           = "ami-0ff39345bd62c82a5"
+  key_name = aws_key_pair.key.id
+  subnet_id = aws_subnet.subpriv2.id
+  user_data = file("userdata.tpl")
+  vpc_security_group_ids = [aws_security_group.dev_sg.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "nginx2"
   }
   
   root_block_device {
