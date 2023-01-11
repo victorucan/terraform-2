@@ -10,7 +10,7 @@ resource "aws_vpc" "pri_vpc" {
 
 resource "aws_subnet" "subpub1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.1.1.0/24"
+  cidr_block = "10.1.0.0/18"
   map_public_ip_on_launch = true
 
   tags = {
@@ -20,7 +20,7 @@ resource "aws_subnet" "subpub1" {
 
 resource "aws_subnet" "subpub2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.1.2.0/24"
+  cidr_block = "10.1.64.0/18"
   map_public_ip_on_launch = true
 
   tags = {
@@ -30,7 +30,7 @@ resource "aws_subnet" "subpub2" {
 
 resource "aws_subnet" "subpriv1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.1.3.0/24"
+  cidr_block = "10.1.128.0/18"
   map_public_ip_on_launch = false
 
   tags = {
@@ -40,7 +40,7 @@ resource "aws_subnet" "subpriv1" {
 
 resource "aws_subnet" "subpriv2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.1.4.0/24"
+  cidr_block = "10.1.192.0/18"
   map_public_ip_on_launch = false
 
   tags = {
@@ -109,7 +109,6 @@ resource "aws_instance" "web1" {
   subnet_id = aws_subnet.subpriv1.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
-  associate_public_ip_address = true
 
   tags = {
     Name = "nginx1"
@@ -126,7 +125,6 @@ resource "aws_instance" "web2" {
   subnet_id = aws_subnet.subpriv2.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
-  associate_public_ip_address = true
 
   tags = {
     Name = "nginx2"
