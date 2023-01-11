@@ -1,5 +1,5 @@
 resource "aws_vpc" "pri_vpc" {
-  cidr_block           = "10.0.0.0/8"
+  cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -10,7 +10,7 @@ resource "aws_vpc" "pri_vpc" {
 
 resource "aws_subnet" "subpub1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.252.0.0/16"
+  cidr_block = "10.0.246.0/24"
   map_public_ip_on_launch = true
 
   tags = {
@@ -20,7 +20,7 @@ resource "aws_subnet" "subpub1" {
 
 resource "aws_subnet" "subpub2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.253.0.0/16"
+  cidr_block = "10.0.247.0/24"
   map_public_ip_on_launch = true
 
   tags = {
@@ -30,7 +30,7 @@ resource "aws_subnet" "subpub2" {
 
 resource "aws_subnet" "subpriv1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.254.0.0/16"
+  cidr_block = "10.0.248.0/24"
   map_public_ip_on_launch = false
 
   tags = {
@@ -40,7 +40,7 @@ resource "aws_subnet" "subpriv1" {
 
 resource "aws_subnet" "subpriv2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.255.0.0/16"
+  cidr_block = "10.0.249.0/24"
   map_public_ip_on_launch = false
 
   tags = {
