@@ -1,5 +1,5 @@
 resource "aws_vpc" "pri_vpc" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = "10.1.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -10,7 +10,7 @@ resource "aws_vpc" "pri_vpc" {
 
 resource "aws_subnet" "subpub1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.0.246.0/24"
+  cidr_block = "10.1.1.0/24"
   map_public_ip_on_launch = true
 
   tags = {
@@ -20,7 +20,7 @@ resource "aws_subnet" "subpub1" {
 
 resource "aws_subnet" "subpub2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.0.247.0/24"
+  cidr_block = "10.1.2.0/24"
   map_public_ip_on_launch = true
 
   tags = {
@@ -30,7 +30,7 @@ resource "aws_subnet" "subpub2" {
 
 resource "aws_subnet" "subpriv1" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.0.248.0/24"
+  cidr_block = "10.1.3.0/24"
   map_public_ip_on_launch = false
 
   tags = {
@@ -40,7 +40,7 @@ resource "aws_subnet" "subpriv1" {
 
 resource "aws_subnet" "subpriv2" {
   vpc_id     = aws_vpc.pri_vpc.id
-  cidr_block = "10.0.249.0/24"
+  cidr_block = "10.1.4.0/24"
   map_public_ip_on_launch = false
 
   tags = {
@@ -56,7 +56,22 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-resource "aws_route_table" "rt" {
+resource "aws_eip" "nat" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.subpub1.id
+
+  tags = {
+    Name = "NAT"
+  }
+
+ depends_on = [aws_internet_gateway.gw]
+}
+
+resource "aws_route_table" "rt1" {
   vpc_id = aws_vpc.pri_vpc.id
 
   route {
@@ -64,18 +79,40 @@ resource "aws_route_table" "rt" {
     gateway_id = aws_internet_gateway.gw.id
   }
   tags = {
-    Name = "route_table"
+    Name = "rt_Public"
+  }
+}
+
+resource "aws_route_table" "rt2" {
+  vpc_id = aws_vpc.pri_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat.id
+  }
+  tags = {
+    Name = "rt_Priv"
   }
 }
 
 resource "aws_route_table_association" "as1" {
   subnet_id      = aws_subnet.subpriv1.id
-  route_table_id = aws_route_table.rt.id
+  route_table_id = aws_route_table.rt1.id
 }
 
 resource "aws_route_table_association" "as2" {
   subnet_id      = aws_subnet.subpriv2.id
-  route_table_id = aws_route_table.rt.id
+  route_table_id = aws_route_table.rt1.id
+}
+
+resource "aws_route_table_association" "as3" {
+  subnet_id      = aws_subnet.subpub1.id
+  route_table_id = aws_route_table.rt2.id
+}
+
+resource "aws_route_table_association" "as4" {
+  subnet_id      = aws_subnet.subpub2.id
+  route_table_id = aws_route_table.rt2.id
 }
 
 resource "aws_security_group" "dev_sg" {
@@ -109,6 +146,7 @@ resource "aws_instance" "web1" {
   subnet_id = aws_subnet.subpriv1.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "nginx1"
@@ -118,6 +156,7 @@ resource "aws_instance" "web1" {
     volume_size= 10
   }
 }
+
 resource "aws_instance" "web2" {
   instance_type = "t2.micro"
   ami           = "ami-0ff39345bd62c82a5"
@@ -125,6 +164,7 @@ resource "aws_instance" "web2" {
   subnet_id = aws_subnet.subpriv2.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "nginx2"
