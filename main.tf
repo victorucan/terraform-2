@@ -79,7 +79,7 @@ resource "aws_route_table" "rt1" {
     gateway_id = aws_internet_gateway.gw.id
   }
   tags = {
-    Name = "rt_Public"
+    Name = "rt_Priv"
   }
 }
 
@@ -91,7 +91,7 @@ resource "aws_route_table" "rt2" {
     gateway_id = aws_nat_gateway.nat.id
   }
   tags = {
-    Name = "rt_Priv"
+    Name = "rt_Public"
   }
 }
 
