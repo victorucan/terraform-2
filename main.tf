@@ -200,7 +200,7 @@ resource "aws_launch_template" "launchtemplate1" {
     }
   }
 
-  user_data =   user_data = filebase64("${path.module}/ec2.userdata")
+  user_data = filebase64("${path.module}/ec2.userdata")
 }
 
 
