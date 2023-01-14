@@ -138,82 +138,6 @@ resource "aws_security_group" "dev_sg" {
   }
 }
 
-data "aws_ami" "Nginx" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # jammy
-}
-
-resource "aws_launch_configuration" "as_conf" {
-  name_prefix   = "terraform-lc-nginx"
-  image_id      = data.aws_ami.Nginx.id
-  instance_type = "t2.micro"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_placement_group" "test" {
-  name     = "test"
-  strategy = "cluster"
-}
-
-resource "aws_autoscaling_group" "ASG" {
-  name                      = "terraform-asg"
-  max_size                  = 5
-  min_size                  = 1
-  health_check_grace_period = 300
-  health_check_type         = "ELB"
-  desired_capacity          = 2
-  force_delete              = true
-  placement_group           = aws_placement_group.test.id
-  launch_configuration      = aws_launch_configuration.as_conf.id
-  vpc_zone_identifier       = [aws_subnet.subpriv1.id, aws_subnet.subpriv2.id]
-
-  initial_lifecycle_hook {
-    name                 = "foobar"
-    default_result       = "CONTINUE"
-    heartbeat_timeout    = 2000
-    lifecycle_transition = "autoscaling:EC2_INSTANCE_LAUNCHING"
-
-    notification_metadata = <<EOF
-{
-  "foo": "bar"
-}
-EOF
-
-    notification_target_arn = "arn:aws:sqs:us-east-2:141359338028:queue1*"
-    role_arn                = "arn:aws:iam::141359338028:role/S3Access"
-  }
-
-  tag {
-    key                 = "foo"
-    value               = "bar"
-    propagate_at_launch = true
-  }
-
-  timeouts {
-    delete = "15m"
-  }
-
-  tag {
-    key                 = "lorem"
-    value               = "ipsum"
-    propagate_at_launch = false
-  }
-}
-
 resource "aws_security_group" "alb" {
   name        = "alb"
   description = "alb network traffic"
@@ -239,6 +163,47 @@ resource "aws_security_group" "alb" {
   }
 }
 
+resource "aws_key_pair" "key" {
+  key_name   = "mykey"
+  public_key = file("/home/ubuntu/.ssh/mykey.pub")
+}
+
+data "aws_ami" "Nginx" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # jammy
+}
+
+resource "aws_launch_template" "launchtemplate1" {
+  name = "web"
+
+  image_id               = data.aws_ami.Nginx.id
+  instance_type          = "t2.micro"
+  key_name               = "aws_key_pair.key.id"
+  vpc_security_group_ids = [aws_security_group.dev_sg.id]
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Name = "WebServer"
+    }
+  }
+
+  user_data = file("userdata.tpl")
+}
+
+
 resource "aws_lb" "LB" {
   name               = "Terraform-lb"
   internal           = false
@@ -261,3 +226,27 @@ resource "aws_lb" "LB" {
   }
 }
 */
+
+resource "aws_alb_target_group" "webserver" {
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.pri_vpc.id
+}
+
+resource "aws_autoscaling_group" "asg" {
+  vpc_zone_identifier = [aws_subnet.subpriv1.id, aws_subnet.subpriv2.id]
+
+  desired_capacity = 2
+  max_size         = 3
+  min_size         = 2
+
+  target_group_arns = [aws_alb_target_group.webserver.arn]
+
+  launch_template {
+    id      = aws_launch_template.launchtemplate1.id
+    version = "$Latest"
+  }
+}
+
+
+
