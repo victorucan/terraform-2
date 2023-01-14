@@ -125,9 +125,10 @@ resource "aws_security_group" "dev_sg" {
   vpc_id      = aws_vpc.pri_vpc.id
 
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = ["10.1.0.0/16"]
   }
   egress {
@@ -231,6 +232,33 @@ resource "aws_alb_target_group" "webserver" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.pri_vpc.id
+}
+
+resource "aws_alb_listener" "front_end" {
+  load_balancer_arn = aws_lb.LB.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.webserver.arn
+  }
+}
+
+resource "aws_alb_listener_rule" "rule1" {
+  listener_arn = aws_alb_listener.front_end.arn
+  priority     = 99
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.webserver.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/"]
+    }
+  }
 }
 
 resource "aws_autoscaling_group" "asg" {
