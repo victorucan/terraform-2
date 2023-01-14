@@ -163,7 +163,7 @@ resource "aws_security_group" "alb" {
   }
 }
 
-resource "aws_key_pair" "key" {
+resource "aws_key_pair" "mykey" {
   key_name   = "mykey"
   public_key = file("/home/ubuntu/.ssh/mykey.pub")
 }
@@ -189,7 +189,7 @@ resource "aws_launch_template" "launchtemplate1" {
 
   image_id               = data.aws_ami.Nginx.id
   instance_type          = "t2.micro"
-  key_name               = "aws_key_pair.key.id"
+  key_name               = "aws_key_pair.mykey.id"
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
 
   tag_specifications {
