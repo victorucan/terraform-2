@@ -147,7 +147,7 @@ resource "aws_security_group" "dev_sg" {
     cidr_blocks = ["10.1.0.0/16"]
   }
 
-
+}
 resource "aws_security_group" "alb" {
   name        = "alb"
   description = "alb network traffic"
