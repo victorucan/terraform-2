@@ -189,8 +189,8 @@ resource "aws_autoscaling_group" "ASG" {
 }
 EOF
 
-    notification_target_arn = "arn:aws:sqs:us-east-1:444455556666:queue1*"
-    role_arn                = "arn:aws:iam::123456789012:role/S3Access"
+    notification_target_arn = "arn:aws:sqs:us-east-2:141359338028:queue1*"
+    role_arn                = "arn:aws:iam::141359338028:role/S3Access"
   }
 
   tag {
