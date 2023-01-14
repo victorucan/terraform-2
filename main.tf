@@ -79,7 +79,7 @@ resource "aws_route_table" "rt1" {
     gateway_id = aws_internet_gateway.gw.id
   }
   tags = {
-    Name = "rt_Priv"
+    Name = "rt_Pub"
   }
 }
 
@@ -91,28 +91,28 @@ resource "aws_route_table" "rt2" {
     gateway_id = aws_nat_gateway.nat.id
   }
   tags = {
-    Name = "rt_Public"
+    Name = "rt_Priv"
   }
 }
 
 resource "aws_route_table_association" "as1" {
   subnet_id      = aws_subnet.subpriv1.id
-  route_table_id = aws_route_table.rt1.id
+  route_table_id = aws_route_table.rt2.id
 }
 
 resource "aws_route_table_association" "as2" {
   subnet_id      = aws_subnet.subpriv2.id
-  route_table_id = aws_route_table.rt1.id
+  route_table_id = aws_route_table.rt2.id
 }
 
 resource "aws_route_table_association" "as3" {
   subnet_id      = aws_subnet.subpub1.id
-  route_table_id = aws_route_table.rt2.id
+  route_table_id = aws_route_table.rt1.id
 }
 
 resource "aws_route_table_association" "as4" {
   subnet_id      = aws_subnet.subpub2.id
-  route_table_id = aws_route_table.rt2.id
+  route_table_id = aws_route_table.rt1.id
 }
 
 resource "aws_security_group" "dev_sg" {
@@ -146,7 +146,7 @@ resource "aws_instance" "web1" {
   subnet_id = aws_subnet.subpriv1.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   tags = {
     Name = "nginx1"
@@ -164,7 +164,7 @@ resource "aws_instance" "web2" {
   subnet_id = aws_subnet.subpriv2.id
   user_data = file("userdata.tpl")
   vpc_security_group_ids = [aws_security_group.dev_sg.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   tags = {
     Name = "nginx2"
